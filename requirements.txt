@@ -1,0 +1,11 @@
+torch
+torchvision
+torchaudio
+transformers
+diffusers
+accelerate
+datasets
+scipy
+gradio
+numpy
+huggingface_hub

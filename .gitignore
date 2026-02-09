@@ -1,0 +1,25 @@
+# --- .gitignore ---
+
+# Ignore Python system files
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Ignore data files
+data/
+*.zip
+*.tar.gz
+*.wav
+*.png
+*.jpg
+
+# Ignore model checkpoints
+checkpoints/
+*.pth
+*.ckpt
+*.safetensors
+
+# Ignore IDE files
+.vscode/
+.idea/

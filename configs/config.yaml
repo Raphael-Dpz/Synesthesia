@@ -1,0 +1,29 @@
+project_name: "Synesthesia_Project"
+
+paths:
+  # Generated dataset path
+  synthetic_dir: "./data/synthetic"
+  # Model checkpoints path
+  checkpoint_dir: "./data/checkpoints"
+  # csv file containing metadata (image/audio paths, labels, etc.)
+  metadata_file: "metadata.csv"
+
+model:
+  # Image encoder model (CLIP)
+  image_encoder: "openai/clip-vit-base-patch32"
+  # Audio encoder model (CLAP)
+  audio_encoder: "laion/clap-htsat-unfused"
+  # Adaptator architecture
+  input_dim: 768  # CLIP output
+  output_dim: 512 # CLAP output
+
+training:
+  device: "cuda"
+  batch_size: 16
+  learning_rate: 1e-4
+  epochs: 10
+  save_every: 2 # Save model checkpoint every N epochs
+
+generation:
+  # Number of synthetic samples to generate
+  num_samples: 100 
