@@ -38,7 +38,7 @@ def main():
     synthesizer = DataSynthesizer(device=config['training']['device'])
 
     # Load AudioCaps and skip duplicates
-    dataset = load_dataset("audiocaps", split="train", streaming=True)
+    dataset = load_dataset("audiocaps", split="train", streaming=True) # fetch audio in the training split 
     dataset_iter = iter(dataset)
     for _ in range(start_index):
         next(dataset_iter, None)
