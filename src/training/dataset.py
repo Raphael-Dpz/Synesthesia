@@ -39,7 +39,7 @@ class SynesthesiaDataset(Dataset):
             waveform = torch.from_numpy(audio_array)
 
             # B. Pad or Truncate
-            target_length = self.target_sample_rate * self.max_audio_length # 240 000
+            target_length = self.target_sample_rate * self.max_audio_length
             current_length = waveform.shape[0]
 
             if current_length > target_length:
@@ -49,8 +49,8 @@ class SynesthesiaDataset(Dataset):
                 waveform = torch.nn.functional.pad(waveform, (0, padding)) # too short: pad
 
             return {
-                "image": image,
-                "audio": waveform,
+                "image": image,      # PIL Image
+                "audio": waveform,   # Tensor 1D ([240000] if 5 seconds at 48kHz)
                 "caption": row['caption']
             }
 
