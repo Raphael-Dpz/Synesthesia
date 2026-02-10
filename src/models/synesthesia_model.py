@@ -30,8 +30,10 @@ class SynesthesiaModel(nn.Module):
             nn.Linear(hidden_dim, output_dim) 
         )
         
-    def forward(self, images):
-        img_features = self.image_encoder(images) # [Batch, 768]
-        audio_features = self.projection(img_features) # [Batch, 512]
+    def forward(self, pixel_values):
+        outputs = self.image_encoder(pixel_values)
+        image_embedding = outputs.pooler_output # [Batch, 768]
         
-        return audio_features
+        audio_prediction = self.projection(image_embedding) # [Batch, 512]
+        
+        return audio_prediction
