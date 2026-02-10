@@ -17,7 +17,7 @@ class DataSynthesizer:
             device (str): Computation device ('cuda' for GPU or 'cpu').
         """
         self.device = device
-        print(f"[INFO] Loading Text-to-Image model: {model_id}...")
+        print(f"Loading Text-to-Image model: {model_id}...")
 
         # We use float16 (half precision) if on GPU to save ~50% VRAM and speed up generation.
         dtype = torch.float16 if device == "cuda" else torch.float32
@@ -49,7 +49,7 @@ class DataSynthesizer:
             output_path (str): Full path where the .png will be saved.
         """
         # Prompt Engineering
-        enhanced_prompt = f"{prompt}, realistic, 4k, high detailed, cinematic lighting, atmospheric"
+        enhanced_prompt = f"{prompt}, realistic scene, 4k, high detailed, cinematic lighting, atmospheric"
         
         # Negative prompt
         negative_prompt = "low quality, blurry, distorted, text, watermark, signature, bad anatomy"
@@ -59,7 +59,7 @@ class DataSynthesizer:
             image = self.pipe(
                 prompt=enhanced_prompt,
                 negative_prompt=negative_prompt,
-                num_inference_steps=30, # Balance between speed (20) and quality (50)
+                num_inference_steps=40, # Balance between speed (20) and quality (50)
                 guidance_scale=7.5      # How strictly to follow the prompt
             ).images[0]
 

@@ -4,8 +4,12 @@ torchaudio
 transformers
 diffusers
 accelerate
-datasets
+datasets=2.21.0
 scipy
 gradio
 numpy
 huggingface_hub
+soundfile
+librosa
+ipykernel
+ipython
