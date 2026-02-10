@@ -15,10 +15,11 @@ model:
   audio_encoder: "laion/clap-htsat-unfused"
   # Adaptator architecture
   input_dim: 768  # CLIP output
+  hidden_dim: 768
   output_dim: 512 # CLAP output
 
 training:
-  device: "cpu" # or "cpu" if no GPU available
+  device: "gpu" # or "cpu" if no GPU available
   batch_size: 16
   learning_rate: 1e-4
   epochs: 10
@@ -26,4 +27,4 @@ training:
 
 generation:
   # Number of synthetic samples to generate
-  num_samples: 3
+  num_samples: 100
