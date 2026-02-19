@@ -31,7 +31,7 @@ def main():
     train_dataset = SynesthesiaDataset(
         metadata_path=os.path.join(config['paths']['synthetic_dir'], config['paths']['metadata_file']),
         target_sample_rate=48000, # CLAP requires 48kHz
-        max_audio_length=5
+        max_audio_length=30 
     )
     
     def collate_fn(batch):

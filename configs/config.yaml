@@ -19,12 +19,14 @@ model:
   output_dim: 512 # CLAP output
 
 training:
-  device: "gpu" # or "cpu" if no GPU available
-  batch_size: 16
+  device: "cpu" # or "cpu" if no GPU available
+  batch_size: 2
   learning_rate: 1e-4
-  epochs: 10
-  save_every: 5 # Save model checkpoint every N epochs
+  epochs: 2
+  save_every: 1 # Save model checkpoint every N epochs
 
 generation:
   # Number of synthetic samples to generate
-  num_samples: 100
+  num_samples: 5
+  steps: 20 # Number of inference steps for image generation (default: 20)
+  guidance_scale: 7.5 # How strongly the model should follow the prompt (default: 7.5)

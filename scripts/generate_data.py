@@ -2,13 +2,11 @@ import os
 import sys
 import yaml
 import pandas as pd
-import scipy.io.wavfile
-from datasets import load_dataset
+import shutil  # <-- Nouveau: pour copier les fichiers audio
 from tqdm import tqdm
 
 # Add project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 
 from src.data_gen.synthesizer import DataSynthesizer
 
@@ -27,11 +25,21 @@ def main():
     config = load_config()
     output_dir = config['paths']['synthetic_dir']
     num_samples_to_generate = config['generation']['num_samples']
+    steps = config['generation']['steps']
+    guidance_scale = config['generation']['guidance_scale']
     
     img_dir = os.path.join(output_dir, "images")
     audio_dir = os.path.join(output_dir, "audio")
     csv_path = os.path.join(output_dir, config['paths']['metadata_file'])
     
+    # --- CONFIGURATION CLOTHO ---
+    clotho_csv = "data/raw/clotho_captions_development.csv"
+    clotho_audio_dir = "data/raw/development"
+    
+    if not os.path.exists(clotho_csv):
+        print(f"[ERROR] Impossible de trouver le fichier {clotho_csv}. Télécharge Clotho d'abord !")
+        return
+
     os.makedirs(img_dir, exist_ok=True)
     os.makedirs(audio_dir, exist_ok=True)
 
@@ -46,14 +54,13 @@ def main():
         return
 
     device = config['training']['device']
-    synthesizer = DataSynthesizer(device=device)
+    synthesizer = DataSynthesizer(steps=steps, guidance_scale=guidance_scale, device=device)
 
-    print("Loading ESC-50 dataset...")
-    dataset = load_dataset("ashraq/esc50", split="train", streaming=True)
-
-    dataset_iter = iter(dataset)
-    for _ in range(start_index):
-        next(dataset_iter, None)
+    print("Loading Clotho dataset metadata...")
+    df_clotho = pd.read_csv(clotho_csv)
+    
+    # On saute les éléments déjà générés
+    df_clotho = df_clotho.iloc[start_index:]
 
     metadata = []
     count = 0
@@ -61,15 +68,19 @@ def main():
     
     pbar = tqdm(total=num_samples_to_generate - start_index, desc="Generating Data")
     
-    while total_processed < num_samples_to_generate:
+    for index, row in df_clotho.iterrows():
+        if total_processed >= num_samples_to_generate:
+            break
+            
+        # Clotho utilise 'file_name' pour l'audio et 'caption_1' pour le texte principal
+        orig_audio_name = row['file_name']
+        prompt = row['caption_1'] 
         
-        sample = next(dataset_iter)
+        orig_audio_path = os.path.join(clotho_audio_dir, orig_audio_name)
         
-        category = sample['category'] 
-        prompt = category.replace("_", " ") # Clean category prompt
-        
-        audio_array = sample['audio']['array']
-        sample_rate = sample['audio']['sampling_rate']
+        if not os.path.exists(orig_audio_path):
+            print(f"\n[WARN] Fichier audio introuvable : {orig_audio_path}. On passe au suivant.")
+            continue
         
         file_id = f"sample_{total_processed:04d}"
         img_filename = f"{file_id}.png"
@@ -78,15 +89,19 @@ def main():
         img_path = os.path.join(img_dir, img_filename)
         audio_path = os.path.join(audio_dir, audio_filename)
 
-        scipy.io.wavfile.write(audio_path, sample_rate, audio_array)
+        # 1. Copier le fichier audio (au lieu de le sauvegarder depuis un array)
+        shutil.copy(orig_audio_path, audio_path)
+        
+        # 2. Générer l'image
         synthesizer.generate_image(prompt=prompt, output_path=img_path)
 
+        # 3. Mettre à jour les métadonnées
         metadata.append({
             "id": file_id,
             "image_path": os.path.join("images", img_filename),
             "audio_path": os.path.join("audio", audio_filename),
             "caption": prompt,
-            "category": category
+            "category": "clotho" # On fixe la catégorie car Clotho n'en a pas
         })
         
         count += 1
@@ -94,8 +109,8 @@ def main():
         pbar.update(1)
 
         if count % 5 == 0:
-                save_metadata(metadata, csv_path)
-                metadata = [] 
+            save_metadata(metadata, csv_path)
+            metadata = [] 
             
     pbar.close()
 

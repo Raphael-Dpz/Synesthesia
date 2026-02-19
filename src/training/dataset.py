@@ -7,10 +7,10 @@ from torch.utils.data import Dataset
 
 class SynesthesiaDataset(Dataset):
     """
-    Dataset loader robuste utilisant Librosa pour Windows.
-    Gère automatiquement le resampling et le mixage mono.
+    Dataset loader pour Clotho (Image + Audio 15-30s).
+    Prend l'audio entier et applique un padding (silence) pour unifier la taille.
     """
-    def __init__(self, metadata_path: str, transform=None, target_sample_rate=48000, max_audio_length=5):
+    def __init__(self, metadata_path: str, transform=None, target_sample_rate=48000, max_audio_length=30):
         self.metadata = pd.read_csv(metadata_path)
         self.root_dir = os.path.dirname(metadata_path)
         self.transform = transform
@@ -26,36 +26,41 @@ class SynesthesiaDataset(Dataset):
 
         try:
             row = self.metadata.iloc[idx]
+            
+            # Chemins Clotho
             image_path = os.path.join(self.root_dir, row['image_path'])
             audio_path = os.path.join(self.root_dir, row['audio_path'])
 
-            # Image
+            # --- 1. IMAGE ---
             image = Image.open(image_path).convert("RGB")
 
-            # Audio
-            # A. Resample and mix to mono using Librosa (more robust than torchcodec on Windows)
+            # --- 2. AUDIO (Chargement complet) ---
+            # Librosa charge tout le fichier en 48kHz Mono
             audio_array, _ = librosa.load(audio_path, sr=self.target_sample_rate, mono=True)
-            
             waveform = torch.from_numpy(audio_array)
 
-            # B. Pad or Truncate
-            target_length = self.target_sample_rate * self.max_audio_length
+            # --- 3. UNIFICATION DE LA TAILLE (30 SECONDES) ---
+            # 30 secondes * 48000 Hz = 1 440 000 points
+            target_length = self.target_sample_rate * self.max_audio_length 
             current_length = waveform.shape[0]
 
             if current_length > target_length:
-                waveform = waveform[:target_length] # too long: cut
+                # Si par hasard un fichier dépasse 30s, on le coupe pile à 30s
+                waveform = waveform[:target_length]
             elif current_length < target_length:
+                # S'il fait moins de 30s, on ajoute du silence (zéros) à la fin
                 padding = target_length - current_length
-                waveform = torch.nn.functional.pad(waveform, (0, padding)) # too short: pad
+                waveform = torch.nn.functional.pad(waveform, (0, padding))
 
             return {
-                "image": image,      # PIL Image
-                "audio": waveform,   # Tensor 1D ([240000] if 5 seconds at 48kHz)
+                "image": image,
+                "audio": waveform,
                 "caption": row['caption']
             }
 
         except Exception as e:
-            print(f"[ERROR] Impossible de lire {idx}: {e}")
+            print(f"[ERROR] Impossible de charger l'index {idx}: {e}")
+            # Sécurité : on renvoie le premier élément si celui-ci est corrompu
             if idx != 0: 
                 return self.__getitem__(0)
             else:
