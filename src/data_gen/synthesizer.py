@@ -12,10 +12,17 @@ class DataSynthesizer:
         """
         Initializes the Stable Diffusion pipeline.
 
+        ==========
         Args:
             steps (int): Number of inference steps for image generation (default: 20).  
             guidance_scale (float): How strongly the model should follow the prompt (default: 7.5).
             model_id (str): The Hugging Face model ID (default: SD v1.5).
+            device (str): Computation device ('cuda' for GPU or 'cpu').
+            
+        ==========
+        Attributes:
+            steps (int): Number of inference steps for image generation (default: 20).  
+            guidance_scale (float): How strongly the model should follow the prompt (default: 7.5).
             device (str): Computation device ('cuda' for GPU or 'cpu').
         """
         self.device = device
@@ -49,7 +56,7 @@ class DataSynthesizer:
         Generates an image from a text prompt and saves it to disk.
 
         Args:
-            prompt (str): The raw caption from AudioCaps (e.g., "Wind blowing in trees").
+            prompt (str): The raw caption from clotho (e.g., "Wind blowing in trees [...]").
             output_path (str): Full path where the .png will be saved.
         """
         # Prompt Engineering
@@ -63,8 +70,8 @@ class DataSynthesizer:
             image = self.pipe(
                 prompt=enhanced_prompt,
                 negative_prompt=negative_prompt,
-                num_inference_steps=self.steps, # Balance between speed (20) and quality (50)
-                guidance_scale=self.guidance_scale      # How strictly to follow the prompt
+                num_inference_steps=self.steps,      # Balance between speed (20) and quality (50)
+                guidance_scale=self.guidance_scale   # How strictly to follow the prompt
             ).images[0]
 
         image.save(output_path)
